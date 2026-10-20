@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="docs/cover.png" width="600">
+</p>
 # esp32-soil-moisture-node
 
 An ESP32 soil-moisture monitoring node: a capacitive soil sensor calibrated against gravimetric (weighed) moisture, threshold-based irrigation decision logic with hysteresis, a local OLED display, and a live Adafruit IO dashboard.
