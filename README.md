@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/cover.png" width="600">
+  <img src="docs/cover.jpg" width="600">
 </p>
 # esp32-soil-moisture-node
 
