@@ -16,9 +16,8 @@ for _, r in points.iterrows():
     blocks = df["soil_mv"].groupby((t // 30).astype(int)).mean().round(0).tolist()
     print(f'{r["file"]}: rata-rata per 30 s = {blocks} | min={df["soil_mv"].min()} max={df["soil_mv"].max()}')
 
-ax.set_xlabel("Waktu sejak rekaman dimulai (s)")
-ax.set_ylabel("Sensor output (mV)")
-ax.legend(title="Kadar air")
-ax.grid(alpha=0.3)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Output (mV)")
+ax.grid(False)
 DOCS.mkdir(exist_ok=True)
 fig.savefig(DOCS / "cal_traces.png", dpi=150, bbox_inches="tight")
