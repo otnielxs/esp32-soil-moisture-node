@@ -24,7 +24,7 @@ An ESP32 soil-moisture monitoring node: a capacitive soil sensor calibrated agai
 
 All modules are powered from the 3V3 pin. GPIO34 is on ADC1, because ADC2 cannot be used while WiFi is active.
 
-![Assembled node](docs/setup.jpg)
+![Assembled node](docs/setup.png)
 
 ## How it works
 
