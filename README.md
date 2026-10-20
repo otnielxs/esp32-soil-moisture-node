@@ -123,13 +123,3 @@ docs/                 figures, screenshots and photos
 - HTTPS requests use `setInsecure()` (the server certificate is not verified), which is acceptable for a hobby project but not for production.
 - The HTTP posts can block the main loop for a few seconds if the network is slow.
 
-## Possible next steps
-
-- Repeat the calibration with several insertions per level and an independent validation set.
-- Use oven-dried soil and control the temperature.
-- Add the pump driver (transistor, flyback diode, separate supply) to close the loop.
-- Replace the REST posts with MQTT and non-blocking networking.
-
-## Author
-
-Otniel Sitepu, Physics graduate, IPB University.
