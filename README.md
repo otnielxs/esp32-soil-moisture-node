@@ -84,7 +84,7 @@ ms,soil_mv,soil_pct,temp_c,rh,light_raw,state
 
 1. Install the *esp32 by Espressif* board package and select **ESP32 Dev Module**. On Windows the CP210x USB driver may be needed for the ESP32 to appear as a COM port.
 2. Install the libraries: *Adafruit SSD1306*, *Adafruit GFX Library*, *DHT sensor library* and *Adafruit Unified Sensor*.
-3. Create the six Adafruit IO feeds listed above (the feed keys must match exactly).
+3. Create the six Adafruit IO feeds listed above.
 4. Copy `firmware/soil_node/secrets.example.h` to `firmware/soil_node/secrets.h` and fill in your WiFi name and password, Adafruit IO username and key. `secrets.h` is ignored by Git.
 5. Open `firmware/soil_node/soil_node.ino` and upload.
 
@@ -101,15 +101,6 @@ Close the Arduino Serial Monitor before running the logger, because only one pro
 
 **Recalibrating:** record each moisture level with `serial_logger.py`, list the files and the weighed moisture in `data/calibration_points.csv`, run `plot_calibration.py`, and copy the resulting mean voltages and moisture values into the `CAL_MV` and `CAL_PCT` arrays in `config.h`.
 
-## Repository layout
-
-```
-firmware/soil_node/   soil_node.ino, config.h, secrets.example.h
-analysis/             serial_logger.py, plot_calibration.py, inspect_cal.py
-tools/hw_test/        hardware test sketch (I2C scan, all sensors, no WiFi)
-data/                 calibration recordings and calibration_points.csv
-docs/                 figures, screenshots and photos
-```
 
 ## Limitations
 
