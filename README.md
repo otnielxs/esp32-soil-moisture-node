@@ -112,5 +112,4 @@ Close the Arduino Serial Monitor before running the logger, because only one pro
 - No actuator is connected. Driving a pump safely needs a transistor or relay, a flyback diode and a separate supply, which were not available for this build.
 - The DHT11 is a low-accuracy sensor (about +/-2 degrees C and +/-5 % RH). The LDR module gives only a digital bright/dark signal.
 - HTTPS requests use `setInsecure()` (the server certificate is not verified), which is acceptable for a hobby project but not for production.
-- The HTTP posts can block the main loop for a few seconds if the network is slow.
-
+- - The Adafruit IO upload (six sequential HTTPS POSTs every 60 s) blocks `loop()` for about 30-40 s on a slow network. In one MQTT log `uptime_s` jumped from 540 to 583, so about three 10 s messages were missed. With `USE_AIO = false` the node published at exact 10 s intervals over a 3-minute run (17 messages).
