@@ -2,3 +2,4 @@ firmware/soil_node/secrets.h
 data/test*.csv
 .venv/
 __pycache__/
+infra/.env

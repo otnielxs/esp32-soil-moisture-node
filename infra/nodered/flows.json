@@ -38,6 +38,21 @@
         "sessionExpiry": ""
     },
     {
+        "id": "30b8edc7d3ad974a",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://influxdb:8086",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
         "id": "3cc11d24.ff01a2",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
@@ -102,7 +117,8 @@
         "wires": [
             [
                 "f8eb15d646db6ddf",
-                "65a6f54799a12ff3"
+                "65a6f54799a12ff3",
+                "91f1135966c2c42b"
             ]
         ]
     },
@@ -123,5 +139,51 @@
         "x": 390,
         "y": 360,
         "wires": []
+    },
+    {
+        "id": "91f1135966c2c42b",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "to_influx",
+        "func": "// Function node \"to_influx\": format untuk node \"influxdb out\"\n// msg.measurement + msg.payload = [fields, tags]\nconst p = msg.payload;\n\nconst fields = {\n  soil_mv: p.soil_mv,\n  soil_pct: p.soil_pct,\n  light: p.light,\n  state: p.state\n};\n// DHT bisa null saat belum terbaca: jangan kirim field kosong\nif (typeof p.temp_c === 'number') fields.temp_c = p.temp_c;\nif (typeof p.rh === 'number') fields.rh = p.rh;\n\nmsg.measurement = 'soil_node';\nmsg.payload = [fields, { node_id: p.node_id }];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 460,
+        "wires": [
+            [
+                "96d0e21486c78975"
+            ]
+        ]
+    },
+    {
+        "id": "96d0e21486c78975",
+        "type": "influxdb out",
+        "z": "f6f2187d.f17ca8",
+        "influxdb": "30b8edc7d3ad974a",
+        "name": "influxdb out",
+        "measurement": "",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "soilnode",
+        "bucket": "telemetry",
+        "x": 410,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "46f3d28666eeedd8",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-influxdb": "0.7.0"
+        }
     }
 ]
