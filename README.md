@@ -10,7 +10,28 @@ An ESP32 soil-moisture monitoring node: a capacitive soil sensor calibrated agai
 - **Calibration:** soil moisture levels prepared by weighing water into air-dried soil, with the sensor logged at each level. Four valid points are used and one is rejected (see [Calibration](#calibration)). Moisture is computed by linear interpolation between the calibration points.
 - **Reliable range:** about 0-22 % gravimetric moisture. Between 22 % and 43 % the result is coarse.
 - **Decision logic:** an `IDLE -> NEED_WATER -> COOLDOWN` state machine with hysteresis. There is no pump: the node only reports the decision.
-- **Telemetry:** soil moisture (mV and %), air temperature, air humidity, light (digital) and state are posted to Adafruit IO every 60 s.
+- **Telemetry (v2):** the node publishes one JSON message every 10 s to a local Mosquitto broker over MQTT, plus a retained `online`/`offline` status with a Last Will. Node-RED validates and enriches each message and writes it to InfluxDB; a Grafana dashboard reads from there. The whole stack runs in Docker.
+- **Telemetry (v1, false):** the original Adafruit IO upload (HTTPS, every 60 s) is still available behind `USE_AIO` in `config.h`.
+
+## Architecture (v2)
+
+```mermaid
+flowchart LR
+  ESP["ESP32 node<br/>soil, DHT11, LDR, OLED"] -->|"MQTT: telemetry JSON, status + LWT"| MQ[("Mosquitto")]
+  ESP -.->|"HTTPS, optional (USE_AIO)"| AIO["Adafruit IO"]
+  MQ --> NR["Node-RED<br/>validate and enrich"]
+  NR -->|"processed"| MQ
+  NR -->|"write"| DB[("InfluxDB 2.7")]
+  DB --> GF["Grafana dashboard"]
+```
+
+| Topic | Direction | Payload |
+|---|---|---|
+| `soilnode/node01/telemetry` | ESP32 to broker | JSON: `soil_mv`, `soil_pct`, `temp_c`, `rh`, `light`, `state`, `uptime_s` |
+| `soilnode/node01/status` | ESP32 to broker | `online` / `offline` (retained; `offline` is the Last Will) |
+| `soilnode/<id>/processed` | Node-RED to broker | telemetry plus `node_id`, `received_at`, `needs_water`, `in_reliable_range` |
+
+![Grafana dashboard](docs/grafana_dashboard.png)
 
 ## Hardware
 
@@ -99,6 +120,24 @@ python analysis/inspect_cal.py
 
 Close the Arduino Serial Monitor before running the logger, because only one program can hold the serial port.
 
+## Running the v2 stack
+
+Requires Docker (Docker Desktop with WSL 2 on Windows).
+
+```
+cd infra
+cp .env.example .env     # then edit the passwords and the InfluxDB token
+docker compose up -d
+```
+
+1. **Firmware:** set `MQTT_HOST` in `secrets.h` to the IP of the machine running Docker (the ESP32 and that machine must be on the same WiFi). On Windows, allow inbound TCP 1883 on the private network profile.
+2. **Node-RED** (`http://localhost:1880`): import `infra/nodered/flows.json`, open the InfluxDB server config (URL `http://influxdb:8086`, version 2.0), enter the token from `.env`, then deploy.
+3. **Grafana** (`http://localhost:3000`): add an InfluxDB data source (Flux, URL `http://influxdb:8086`, organization `soilnode`, bucket `telemetry`, token from `.env`), then import `infra/grafana/soilnode-dashboard.json`.
+
+Containers talk to each other by service name (`mosquitto`, `influxdb`), not `localhost`. The ports of Node-RED, InfluxDB and Grafana are bound to `127.0.0.1` only.
+
+**Checks done on the v2 stack:** published messages arrive every 10 s with no gaps when `USE_AIO = false`; moving the sensor from air into moist soil shows up in Grafana as a step in soil moisture and a change of state; unplugging the ESP32 makes the broker publish the `offline` Last Will after about 45 s.
+
 **Recalibrating:** record each moisture level with `serial_logger.py`, list the files and the weighed moisture in `data/calibration_points.csv`, run `plot_calibration.py`, and copy the resulting mean voltages and moisture values into the `CAL_MV` and `CAL_PCT` arrays in `config.h`.
 
 
@@ -113,3 +152,5 @@ Close the Arduino Serial Monitor before running the logger, because only one pro
 - The DHT11 is a low-accuracy sensor (about +/-2 degrees C and +/-5 % RH). The LDR module gives only a digital bright/dark signal.
 - HTTPS requests use `setInsecure()` (the server certificate is not verified), which is acceptable for a hobby project but not for production.
 - The Adafruit IO upload (six sequential HTTPS POSTs every 60 s) blocks `loop()` for about 30-40 s on a slow network. In one MQTT log `uptime_s` jumped from 540 to 583, so about three 10 s messages were missed. With `USE_AIO = false` the node published at exact 10 s intervals over a 3-minute run (17 messages).
+- The MQTT broker allows anonymous connections without TLS, which is acceptable on a home WiFi but not beyond it.
+- InfluxDB keeps data for 30 days (`DOCKER_INFLUXDB_INIT_RETENTION` in `docker-compose.yml`).
