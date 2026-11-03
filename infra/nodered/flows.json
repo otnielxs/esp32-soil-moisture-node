@@ -1,0 +1,127 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e8443e29087deeeb",
+        "type": "mqtt-broker",
+        "name": "mosquitto",
+        "broker": "mosquitto",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "3cc11d24.ff01a2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "e69ad5da1dfe1b1d",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "soilnode/+/telemetry",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "e8443e29087deeeb",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 90,
+        "y": 280,
+        "wires": [
+            [
+                "0c92b95c37556d85"
+            ]
+        ]
+    },
+    {
+        "id": "f8eb15d646db6ddf",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 400,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "0c92b95c37556d85",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 1",
+        "func": "// Function node \"enrich\": validasi payload, tambahkan metadata\nconst nodeId = msg.topic.split('/')[1];   // soilnode/node01/telemetry -> node01\nconst p = msg.payload;\n\nconst valid =\n  typeof p.soil_mv === 'number' && p.soil_mv > 0 && p.soil_mv < 3300 &&\n  typeof p.soil_pct === 'number' && p.soil_pct >= 0 && p.soil_pct <= 100;\n\nif (!valid) {\n  node.warn('Payload tidak valid: ' + JSON.stringify(p));\n  return null;\n}\n\nmsg.payload = {\n  node_id: nodeId,\n  received_at: new Date().toISOString(),\n  ...p,\n  needs_water: p.state === 1,\n  in_reliable_range: p.soil_pct <= 22   // sesuai README: andal sekitar 0-22 %\n};\nmsg.topic = 'soilnode/' + nodeId + '/processed';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 280,
+        "wires": [
+            [
+                "f8eb15d646db6ddf",
+                "65a6f54799a12ff3"
+            ]
+        ]
+    },
+    {
+        "id": "65a6f54799a12ff3",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e8443e29087deeeb",
+        "x": 390,
+        "y": 360,
+        "wires": []
+    }
+]

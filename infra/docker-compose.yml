@@ -7,3 +7,19 @@ services:
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: unless-stopped
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    environment:
+      - TZ=Asia/Jakarta
+    ports:
+      - "127.0.0.1:1880:1880"
+    volumes:
+      - nodered_data:/data
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+volumes:
+  nodered_data:
