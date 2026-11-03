@@ -7,6 +7,7 @@
 #include <DHT.h>
 #include "config.h"
 #include "secrets.h"
+#include "mqtt_client.h"
 
 // ---------- Sensor tanah: median N sampel + konversi kalibrasi ----------
 class SoilSensor {
@@ -67,7 +68,7 @@ Adafruit_SSD1306 oled(128, 64, &Wire, -1);
 State state = State::IDLE;
 unsigned long cooldownStart = 0;
 float lastT = NAN, lastH = NAN;
-unsigned long tSample = 0, tDht = 0, tUpload = 0, tWifi = 0;
+unsigned long tSample = 0, tDht = 0, tUpload = 0, tWifi = 0, tMqtt = 0;
 
 void updateState(float pct) {
   switch (state) {
@@ -131,6 +132,9 @@ void drawOled(int mv, float pct, int light) {
   oled.printf("Cahaya (0/1): %d\n", light);
   oled.printf("Status: %s\n", stateName(state));
   oled.printf("WiFi: %s\n", WiFi.status() == WL_CONNECTED ? "OK" : "putus");
+  char mq[24];
+  mqttStatusLine(mq, sizeof mq);
+  oled.println(mq);
   oled.display();
 }
 
@@ -144,12 +148,14 @@ void setup() {
   pinMode(PIN_LIGHT, INPUT);          // modul LDR pin DO: digital 0/1
   if (USE_DHT) dht.begin();
   WiFi.mode(WIFI_STA);
+  if (USE_MQTT) mqttBegin();
   Serial.println("ms,soil_mv,soil_pct,temp_c,rh,light_raw,state");
 }
 
 void loop() {
   unsigned long now = millis();
   ensureWifi();
+  if (USE_MQTT) { mqttEnsure(); mqtt.loop(); }
 
   if (USE_DHT && now - tDht >= DHT_MS) {
     tDht = now;
@@ -169,7 +175,11 @@ void loop() {
     Serial.printf("%lu,%d,%.1f,%.1f,%.1f,%d,%d\n", now, mv, pct, lastT, lastH, light, (int)state);
     drawOled(mv, pct, light);
 
-    if (now - tUpload >= UPLOAD_MS) {
+    if (USE_MQTT && now - tMqtt >= MQTT_PUBLISH_MS) {
+      tMqtt = now;
+      mqttPublish(mv, pct, lastT, lastH, light, (int)state);
+    }
+    if (USE_AIO && now - tUpload >= UPLOAD_MS) {
       tUpload = now;
       upload(mv, pct, light);
     }

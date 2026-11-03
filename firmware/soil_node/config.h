@@ -32,3 +32,15 @@ constexpr unsigned long SAMPLE_MS     = 1000;
 constexpr unsigned long DHT_MS        = 5000;
 constexpr unsigned long UPLOAD_MS     = 60000;
 constexpr unsigned long WIFI_RETRY_MS = 30000;
+
+// Jalur data: v1 = Adafruit IO (HTTPS), v2 = MQTT ke broker lokal
+constexpr bool USE_AIO  = false;
+constexpr bool USE_MQTT = true;
+
+// MQTT (alamat broker ada di secrets.h)
+constexpr uint16_t MQTT_PORT            = 1883;
+constexpr const char* MQTT_CLIENT_ID    = "soilnode01";
+constexpr const char* TOPIC_TELEMETRY   = "soilnode/node01/telemetry";
+constexpr const char* TOPIC_STATUS      = "soilnode/node01/status";
+constexpr unsigned long MQTT_PUBLISH_MS = 10000;
+constexpr unsigned long MQTT_RETRY_MS   = 10000;
