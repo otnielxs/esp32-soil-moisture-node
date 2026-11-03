@@ -119,6 +119,7 @@ python analysis/inspect_cal.py
 ```
 
 Close the Arduino Serial Monitor before running the logger, because only one program can hold the serial port.
+**Recalibrating:** record each moisture level with `serial_logger.py`, list the files and the weighed moisture in `data/calibration_points.csv`, run `plot_calibration.py`, and copy the resulting mean voltages and moisture values into the `CAL_MV` and `CAL_PCT` arrays in `config.h`.
 
 ## Running the v2 stack
 
@@ -138,8 +139,6 @@ Containers talk to each other by service name (`mosquitto`, `influxdb`), not `lo
 
 **Checks done on the v2 stack:** published messages arrive every 10 s with no gaps when `USE_AIO = false`; moving the sensor from air into moist soil shows up in Grafana as a step in soil moisture and a change of state; unplugging the ESP32 makes the broker publish the `offline` Last Will after about 45 s.
 
-**Recalibrating:** record each moisture level with `serial_logger.py`, list the files and the weighed moisture in `data/calibration_points.csv`, run `plot_calibration.py`, and copy the resulting mean voltages and moisture values into the `CAL_MV` and `CAL_PCT` arrays in `config.h`.
-
 
 ## Limitations
 
@@ -154,3 +153,4 @@ Containers talk to each other by service name (`mosquitto`, `influxdb`), not `lo
 - The Adafruit IO upload (six sequential HTTPS POSTs every 60 s) blocks `loop()` for about 30-40 s on a slow network. In one MQTT log `uptime_s` jumped from 540 to 583, so about three 10 s messages were missed. With `USE_AIO = false` the node published at exact 10 s intervals over a 3-minute run (17 messages).
 - The MQTT broker allows anonymous connections without TLS, which is acceptable on a home WiFi but not beyond it.
 - InfluxDB keeps data for 30 days (`DOCKER_INFLUXDB_INIT_RETENTION` in `docker-compose.yml`).
+
